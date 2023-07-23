@@ -55,6 +55,6 @@ jobs:
           cd ..
           rm -rf gitleaks
       - name: Run gitleaks secret detection scan
-        run: gitleaks detect --no-git -f json -r gitleaks_report.json
+        run: gitleaks detect --no-git -f json -r gitleaks_report.json -v
       - name: Gitleaks Output
         run: echo "gitleaksoutput=$(cat gitleaks_report.json)" >> $GITHUB_OUTPUT
