@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: golang:1.19.0
-    if: (github.actor != 'dependabot[bot]') # Skip any PR created by dependabot to avoid permission issues
+    if: (github.actor != 'dependabot[bot]')
     steps:
       - name: Fetch project source with GitHub Actions Checkout.
         uses: actions/checkout@v3
@@ -55,9 +55,9 @@ jobs:
           cd ..
           rm -rf gitleaks
       - name: Run gitleaks secret detection scan
-        run: gitleaks detect --no-git -f sarif -r gitleaks_report.sarif
+        run: gitleaks detect --no-git -f json -r gitleaks_report.json
       - name: Gitleaks Output
-        run: echo "gitleaksoutput=$(cat gitleaks_report.sarif)" >> $GITHUB_OUTPUT
+        run: echo "gitleaksoutput=$(cat gitleaks_report.json)" >> $GITHUB_OUTPUT
          
 
 
