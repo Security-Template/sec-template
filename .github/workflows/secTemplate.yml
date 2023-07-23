@@ -55,7 +55,7 @@ jobs:
           cd ..
           rm -rf gitleaks
       - name: Run gitleaks secret detection scan
-        run: gitleaks detect --no-git -f sarif -r gitleaks_report.sarif 
+        run: gitleaks detect
 
   dependency_scanner:
     name: gemnasium
