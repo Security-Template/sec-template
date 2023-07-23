@@ -7,31 +7,18 @@ on:
         required: false
         type: string
         default: 'main'
-    secrets:
-      slackUrl:
-        required: true
-      SLACK_CHANNEL:
-        required: true
-      AWS_ACCESS_KEY_ID:
-        required: true
-      AWS_SECRET_ACCESS_KEY:
-        required: true
-      S3_BUCKET_NAME:
-        required: true
-      AWS_REGION:
-        required: true
 
 jobs:
   semgrep:
     name: semgrep
     permissions:
-      contents: read # for actions/checkout to fetch code
+      contents: read 
       actions: read
-      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      security-events: write 
     runs-on: ubuntu-latest
     container:
       image: kondukto/semgrep
-    if: (github.actor != 'dependabot[bot]') # Skip any PR created by dependabot to avoid permission issues
+    if: (github.actor != 'dependabot[bot]')
     steps:
       - name: Fetch project source with GitHub Actions Checkout.
         uses: actions/checkout@v3
@@ -49,35 +36,7 @@ jobs:
           python scripts/config_combiner.py
       - name: Run semgrep
         run: semgrep ci --sarif -o temp_results.sarif --config semgrep_rules/semgrepRulles.yml
-      - name: Send Slack notification
-        run: |
-          python scripts/slack.py \
-            --url "${{ secrets.slackUrl }}" \
-            --title "Github Action Semgrep" \
-            --message "Repo: \`${{ github.repository }}\`, has failed the semgrep scan" \
-            --username "Github Actions" \
-            --actionLink "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-            --branch "${GITHUB_REF##*/}" \
-            --channel "${{ secrets.SLACK_CHANNEL }}"
-        if: failure()
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-        if: failure()
-      - name: Upload results to s3 bucket
-        run: |
-          apk add -q jq
-          jq 'del(.runs[].tool.driver.rules)' temp_results.sarif > results.sarif
-          aws s3 cp results.sarif s3://${{ secrets.S3_BUCKET_NAME }}/${{ github.repository }}/${{ github.run_id }}-${{ github.run_attempt }}/
-        if: failure()
-      - name: Upload SARIF file for GitHub Advanced Security Dashboard
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: results.sarif
-        if: failure()
+        run: cat temp_results.sarif 
         
   secret_detection:
     name: gitleaks
@@ -98,52 +57,14 @@ jobs:
           rm -rf gitleaks
       - name: Run gitleaks secret detection scan
         run: gitleaks detect --no-git -f sarif -r gitleaks_report.sarif 
-      - name: Install aws cli
-        run: |
-          apt update
-          apt install -yq python3-pip
-          pip install awscli requests
-        if: failure()
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-        if: failure()
-      - name: Upload results to s3 bucket
-        run: aws s3 cp gitleaks_report.sarif s3://${{ secrets.S3_BUCKET_NAME }}/${{ github.repository }}/${{ github.run_id }}-${{ github.run_attempt }}/
-        if: failure()
-      - name: Print leak scan result
-        run: |
-          apt update -qq
-          apt install -yqq jq
-          cat gitleaks_report.sarif | jq .'runs[].results'
-        if: failure()
-      - name: Send Slack notification
-        run: |
-          git clone https://github.com/Security-Template/sec-template.git
-          cd sec-template
-          git checkout ${{ inputs.codeScannerRef }}
-          cp -r * ../
-          cd ..
-          rm -rf sec-template/
-          python3 scripts/slack.py \
-            --url "${{ secrets.slackUrl }}" \
-            --title "Github Action Secret Detector" \
-            --message "Repo: \`${{ github.repository }}\`, has failed the secret detection scan" \
-            --username "Github Actions" \
-            --actionLink "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-            --branch "${GITHUB_REF##*/}" \
-            --channel "${{ secrets.SLACK_CHANNEL }}"
-        if: failure()
+        run: cat gitleaks_report.sarif 
 
   dependency_scanner:
     name: gemnasium
     runs-on: ubuntu-latest
     container:
       image: registry.gitlab.com/security-products/gemnasium
-    if: (github.actor != 'dependabot[bot]') # Skip any PR created by dependabot to avoid permission issues
+    if: (github.actor != 'dependabot[bot]')
     steps:
       - name: Fetch project source with GitHub Actions Checkout.
         uses: actions/checkout@v3
@@ -164,21 +85,3 @@ jobs:
             cat gl-dependency-scanning-report.json
             exit 1
           fi
-      - name: Send Slack notification
-        run: |
-          git clone https://github.com/Security-Template/sec-template.git
-          cd sec-template
-          git checkout ${{ inputs.codeScannerRef }}
-          cp -r * ../
-          cd ..
-          rm -rf sec-template/
-          pip install requests
-          python3 scripts/slack.py \
-            --url "${{ secrets.slackUrl }}" \
-            --title "Github Action Dependency Detector" \
-            --message "Repo: \`${{ github.repository }}\`, has failed the dependency scan" \
-            --username "Github Actions" \
-            --actionLink "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-            --branch "${GITHUB_REF##*/}" \
-            --channel "${{ secrets.SLACK_CHANNEL }}"
-        if: failure()
