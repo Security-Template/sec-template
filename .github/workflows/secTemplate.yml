@@ -30,7 +30,7 @@ jobs:
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
     runs-on: ubuntu-latest
     container:
-      image: returntocorp/semgrep
+      image: kondukto/semgrep
     if: (github.actor != 'dependabot[bot]') # Skip any PR created by dependabot to avoid permission issues
     steps:
       - name: Fetch project source with GitHub Actions Checkout.
