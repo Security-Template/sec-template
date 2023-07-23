@@ -37,7 +37,6 @@ jobs:
       - name: Run semgrep
         run: |
           semgrep ci --sarif -o temp_results.sarif --config semgrep_rules/semgrepRulles.yml
-          cat temp_results.sarif 
         
   secret_detection:
     name: gitleaks
@@ -59,7 +58,6 @@ jobs:
       - name: Run gitleaks secret detection scan
         run: |
           gitleaks detect --no-git -f sarif -r gitleaks_report.sarif 
-          cat gitleaks_report.sarif 
 
   dependency_scanner:
     name: gemnasium
