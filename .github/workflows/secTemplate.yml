@@ -38,11 +38,11 @@ jobs:
       - name: Pull semgrep rule repo
         run: |
           git clone https://github.com/Security-Template/sec-template.git
-          cd code-scanner
+          cd sec-template
           git checkout ${{ inputs.codeScannerRef }}
           cp -r * ../
           cd ..
-          rm -rf code-scanner/
+          rm -rf sec-template/
       - name: Generate 1 semgrep config named `semgrepRulles.yml`
         run: |
           pip install pyyaml awscli
@@ -123,11 +123,11 @@ jobs:
       - name: Send Slack notification
         run: |
           git clone https://github.com/Security-Template/sec-template.git
-          cd code-scanner
+          cd sec-template
           git checkout ${{ inputs.codeScannerRef }}
           cp -r * ../
           cd ..
-          rm -rf code-scanner/
+          rm -rf sec-template/
           python3 scripts/slack.py \
             --url "${{ secrets.slackUrl }}" \
             --title "Github Action Secret Detector" \
@@ -167,11 +167,11 @@ jobs:
       - name: Send Slack notification
         run: |
           git clone https://github.com/Security-Template/sec-template.git
-          cd code-scanner
+          cd sec-template
           git checkout ${{ inputs.codeScannerRef }}
           cp -r * ../
           cd ..
-          rm -rf code-scanner/
+          rm -rf sec-template/
           pip install requests
           python3 scripts/slack.py \
             --url "${{ secrets.slackUrl }}" \
